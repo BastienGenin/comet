@@ -2,22 +2,24 @@
   "name": "comet",
   "module": "index.ts",
   "type": "module",
-  "dependecies": {  
+  "dependencies": {
     "@clack/core": "^0.3.3",
     "@clack/prompts": "^0.7.0",
     "@commander-js/extra-typings": "^11.0.0",
+    "eslint": "^8.32.0",
     "clipboardy": "^4.0.0",
     "commander": "^11.0.0",
     "date-fns": "^2.30.0",
     "picocolors": "^1.0.0",
     "prettier": "^2.8.3",
     "tiny-glob": "^0.2.9",
-    "zx": "^7.2.0"},
+    "zx": "^7.2.0"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@ianvs/prettier-plugin-sort-imports": "^3.7.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   }
 }
-
