@@ -1,7 +1,23 @@
-console.log("Hello via Bun!");
+import { version } from "./package.json";
+import { Command } from "@commander-js/extra-typings";
+import ollama from "ollama";
+import { $ } from "zx";
 
-// Path: index.ts
-export async function testJobProcess(server: string, job: number) {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-}
+$.shell = true;
+
+new Command()
+  .name("Comet")
+  .description("Comet CLI")
+  .version(version)
+  .action(async () => {
+    const response = await ollama.chat({
+      model: "codellama:13b",
+      messages: [{ role: "user", content: "Why is the sky blue?" }],
+      stream: true,
+    });
+
+    for await (const part of response) {
+      process.stdout.write(part.message.content);
+    }
+  })
+  .parse();
