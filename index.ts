@@ -271,9 +271,14 @@ function formatFiles(
 function extractScope(fileList: string[]): string[] {
   const scopeList: Set<string> = new Set();
   for (const file of fileList) {
-    const [root, ...rest] = file.split("/");
-    if (rest.length > 0) {
-      scopeList.add(root);
+    const [root, scope, ...rest] = file.split("/");
+    if (rest.length > 0 || scope) {
+      // Changeset is a first level scope
+      if (root === "changeset") {
+        scopeList.add("changeset");
+      } else {
+        scopeList.add(scope);
+      }
     } else {
       scopeList.add("/");
     }
