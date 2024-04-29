@@ -105,86 +105,44 @@ new Command()
         });
       },
 
-      // 3.c Ask the user if they want to use an AI to generate the commit message
-      ai: () => {
-        return p.select({
-          message: "Do you want an AI to steal your job ? (unstable)",
+      // 3.c Ask the user for the commit message
+      commitMsg: async ({ results: { stage, type } }) => {
+        let msg: string = `${type} (${stage?.scope}): `;
+
+        const userMsg = await p.text({
+          placeholder: "...",
+          message: "Please enter a commit message",
+        });
+        msg += userMsg as string;
+
+        const confirm = await p.select({
+          message: "What do you want to do ?",
           options: [
-            { label: "Yes", value: true },
-            { label: "No", value: false },
+            { label: "Commit", value: "commit" },
+            { label: "Cancel", value: "cancel" },
+            { label: "Edit", value: "edit" },
+            { label: "Regenerate", value: "regen" },
           ],
         });
-      },
 
-      // 3.c Ask the user for the commit message OR use the AI
-      commitMsg: async ({ results: { stage, type, ai } }) => {
-        let msg: string = `${type} (${stage?.scope}): `;
-        if (ai) {
-          const diff = await getDiff();
-
-          let commit = false;
-          while (!commit) {
-            s.start();
-            const response = await ollama.chat({
-              model: "nous-hermes2:latest",
-              messages: [
-                {
-                  role: "system",
-                  content: SYSTEM_PROMPT,
-                },
-                {
-                  role: "user",
-                  content: `Here is an output of a git diff, can you resume it in one commit message ?\n"${diff}"`,
-                },
-              ],
-              stream: true,
+        switch (confirm) {
+          case "commit":
+            break;
+          case "cancel":
+            p.outro("Commit aborted.");
+            await $`git restore --staged .`;
+            process.exit(0);
+          case "regen":
+            msg = "";
+            break;
+          case "edit":
+            const userMsg = await p.text({
+              initialValue: msg,
+              placeholder: "...",
+              message: "Please enter a commit message",
             });
-
-            for await (const part of response) {
-              s.message((msg += part.message.content));
-            }
-            s.stop("Done.");
-
-            p.log.info(`${color.dim("Commit message:")} ${color.bold(msg)}`);
-
-            const confirm = await p.select({
-              message: "What do you want to do ?",
-              options: [
-                { label: "Commit", value: "commit" },
-                { label: "Cancel", value: "cancel" },
-                { label: "Edit", value: "edit" },
-                { label: "Regenerate", value: "regen" },
-              ],
-            });
-
-            switch (confirm) {
-              case "commit":
-                commit = true;
-                break;
-              case "cancel":
-                p.outro("Commit aborted.");
-                await $`git restore --staged .`;
-                process.exit(0);
-              case "regen":
-                msg = "";
-                break;
-              case "edit":
-                const userMsg = await p.text({
-                  initialValue: msg,
-                  placeholder: "...",
-                  message: "Please enter a commit message",
-                });
-                msg = userMsg as string;
-                commit = true;
-                break;
-            }
-          }
-        } else {
-          const userMsg = await p.text({
-            placeholder: "...",
-            message: "Please enter a commit message",
-          });
-          msg += userMsg as string;
+            msg = userMsg as string;
+            break;
         }
 
         return msg;
@@ -192,33 +150,31 @@ new Command()
 
       // 4. Commit
       commit: async ({ results: { commitMsg } }) => {
-        const commit = await p.confirm({
-          message: "Ready to commit ?",
+        s.start();
+        $.spawn(`git commit -m "${commitMsg}"`, {
+          stdio: "inherit",
+          shell: true,
         });
-        if (commit) {
-          $.spawn(`git commit -m "${commitMsg}"`, {
-            stdio: "inherit",
-            shell: true,
-          });
-        }
-        return commit;
+        s.stop();
       },
 
       // 5. Push
-      push: async ({ results: { commit } }) => {
-        if (commit) {
-          const push = await p.confirm({
-            message: "Do you want to push the commit ?",
+      push: async () => {
+        const push = await p.confirm({
+          message: "push ?",
+        });
+
+        if (push) {
+          s.start();
+          const branch = await $`git branch --show-current`;
+          await $`git push -u origin ${branch}`;
+          $.spawn(`git push`, {
+            stdio: "inherit",
+            shell: true,
           });
-          if (push) {
-            const branch = await $`git branch --show-current`;
-            await $`git push -u origin ${branch}`;
-            return $.spawn(`git push`, {
-              stdio: "inherit",
-              shell: true,
-            });
-          }
+          s.stop();
         }
+
         return;
       },
     });
