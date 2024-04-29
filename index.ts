@@ -179,14 +179,9 @@ new Command()
       },
     });
 
-    p.outro(`You're all set!`);
+    p.outro(`Done !`);
   })
   .parse();
-
-async function getDiff(): Promise<string> {
-  const { stdout: gitDiff } = await $`git diff --staged`;
-  return gitDiff;
-}
 
 function formatFiles(
   gitStatus: string
