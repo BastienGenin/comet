@@ -1,25 +1,12 @@
 import { version } from "./package.json";
 import * as p from "@clack/prompts";
 import { Command } from "@commander-js/extra-typings";
-import ollama from "ollama";
 import color from "picocolors";
 import { $ } from "zx/core";
 
 $.verbose = false;
 
 const s = p.spinner();
-
-const SYSTEM_PROMPT = `Your only goal is to retrieve a single commit message.
-	Based on the provided output of a \`$ git diff --staged\`, create ONE SINGLE commit message retrieving the global idea, following strictly the next rules:
-	Output directly only one commit message in plain text.
-	Do not add any issues numeration nor explain your output.
-	Do not prepend the output with any prefix nor suffix.
-	Do not add context like "Here is the commit message: ...".
-	Use imperative.
-	One line only, 50 words max.
-	Be clear and concise.
-	Do not put message in quotes.
-	Always provide only the commit message as answer`;
 
 new Command()
   .name("Comet")
